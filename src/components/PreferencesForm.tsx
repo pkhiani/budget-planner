@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserPreferences } from '../types';
-import { MapPin } from 'lucide-react';
+import { MapPin, Car, PiggyBank } from 'lucide-react';
 
 interface PreferencesFormProps {
   preferences: UserPreferences;
@@ -61,19 +61,6 @@ export default function PreferencesForm({ preferences, onPreferencesChange, onSu
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Refueling (times per month)
-            </label>
-            <input
-              type="number"
-              min="0"
-              value={preferences.refuelingFrequency}
-              onChange={(e) => handleChange('refuelingFrequency', parseInt(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
               Travel (times per year)
             </label>
             <input
@@ -84,6 +71,58 @@ export default function PreferencesForm({ preferences, onPreferencesChange, onSu
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
+
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <PiggyBank className="w-5 h-5 text-blue-500" />
+              <label className="block text-sm font-medium text-gray-700">
+                Target Savings (% of income)
+              </label>
+            </div>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={preferences.targetSavings}
+              onChange={(e) => handleChange('targetSavings', parseInt(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Car className="w-5 h-5 text-blue-500" />
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={preferences.hasCar}
+                onChange={(e) => {
+                  handleChange('hasCar', e.target.checked);
+                  if (!e.target.checked) {
+                    handleChange('refuelingFrequency', 0);
+                  }
+                }}
+                className="w-4 h-4 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">I own a car</span>
+            </label>
+          </div>
+
+          {preferences.hasCar && (
+            <div className="ml-7">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Refueling (times per month)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={preferences.refuelingFrequency}
+                onChange={(e) => handleChange('refuelingFrequency', parseInt(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-4">

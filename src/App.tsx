@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { UserPreferences, BudgetData } from './types';
 import PreferencesForm from './components/PreferencesForm';
 import BudgetDashboard from './components/BudgetDashboard';
+import ErrorMessage from './components/ErrorMessage';
 import { Brain } from 'lucide-react';
-import axios from 'axios';
+import { generateBudgetPlan } from './services/budgetService';
 
 const initialPreferences: UserPreferences = {
   diningOutFrequency: 2,
@@ -13,39 +14,30 @@ const initialPreferences: UserPreferences = {
   streamingServices: false,
   travelFrequency: 2,
   city: '',
+  hasCar: false,
+  targetSavings: 20,
 };
 
 function App() {
   const [preferences, setPreferences] = useState<UserPreferences>(initialPreferences);
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const generateBudget = async () => {
+  const handleGenerateBudget = async () => {
+    if (!preferences.city) {
+      setError('Please enter your city');
+      return;
+    }
+
     setLoading(true);
-    try {
-      const response = await axios.post('https://message-tailor-api-production.up.railway.app/api/generate', {
-        prompt: `Generate a monthly budget breakdown based on these preferences:
-          - Location: ${preferences.city}
-          - Dining out ${preferences.diningOutFrequency} times per week
-          - Gift giving ${preferences.giftGivingFrequency} times per month
-          - Refueling ${preferences.refuelingFrequency} times per month
-          - Travel ${preferences.travelFrequency} times per year
-          - ${preferences.gymMembership ? 'Has' : 'No'} gym membership
-          - ${preferences.streamingServices ? 'Has' : 'No'} streaming services
-          Please provide a JSON response with categories (housing, food, transportation, entertainment, etc.), 
-          their monthly amounts, percentages, and money-saving recommendations.`
-      });
+    setError(null);
 
-      // Parse the AI response and structure it
-      const aiResponse = JSON.parse(response.data.choices[0].text);
-      setBudgetData({
-        categories: aiResponse.categories || [],
-        totalBudget: aiResponse.totalBudget || 0,
-        recommendations: aiResponse.recommendations || []
-      });
-    } catch (error) {
-      console.error('Error generating budget:', error);
-      // In a production app, we'd show a proper error message to the user
+    try {
+      const data = await generateBudgetPlan(preferences);
+      setBudgetData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate budget plan');
     } finally {
       setLoading(false);
     }
@@ -63,10 +55,17 @@ function App() {
         </div>
 
         <div className="flex flex-col items-center space-y-8">
+          {error && (
+            <ErrorMessage 
+              message={error} 
+              onDismiss={() => setError(null)} 
+            />
+          )}
+
           <PreferencesForm
             preferences={preferences}
             onPreferencesChange={setPreferences}
-            onSubmit={generateBudget}
+            onSubmit={handleGenerateBudget}
           />
 
           {loading && (
